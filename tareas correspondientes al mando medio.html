@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tareas - Mando Medio</title>
+    <style>
+        :root {
+            --primary-color: #a8d8ea;
+            --secondary-color: #f5e6ca;
+            --accent-color: #aa96da;
+            --text-color: #333;
+            --light-color: #f7f7f7;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .task-item {
+            background-color: var(--light-color);
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-content {
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .edit-btn {
+            background-color: var(--primary-color);
+            color: #333;
+        }
+        
+        .save-btn {
+            background-color: #a2d5ab;
+            color: #333;
+            display: none;
+        }
+        
+        .delete-btn {
+            background-color: #f7a7a3;
+            color: #333;
+        }
+        
+        .add-btn {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 15px;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+            display: none;
+        }
+        
+        .new-task-form {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .new-task-form input,
+        .new-task-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tareas correspondientes al mando medio</h1>
+        
+        <section>
+            <ul class="task-list" id="taskList">
+                <!-- Las tareas se agregarán dinámicamente aquí -->
+            </ul>
+            
+            <button class="add-btn" id="addTaskBtn">+ Agregar Nueva Tarea</button>
+            
+            <div class="new-task-form" id="newTaskForm">
+                <input type="text" id="newTaskTitle" placeholder="Título de la tarea">
+                <textarea id="newTaskDescription" placeholder="Descripción detallada de la tarea"></textarea>
+                <div class="form-actions">
+                    <button class="delete-btn" id="cancelAddBtn">Cancelar</button>
+                    <button class="save-btn" id="confirmAddBtn">Guardar Tarea</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Datos iniciales
+        const initialTasks = [
+            "Diagramar, coordinar y controlar tareas administrativas: Definir procesos y procedimientos para optimizar el funcionamiento del personal administrativo.",
+            "Generar reportes e informes: Elaborar documentos requeridos por el órgano decisorio del servicio.",
+            "Actuar como nexo de comunicación: Facilitar la interacción entre el staff médico, administrativos y otros actores involucrados.",
+            "Presentar informes de gestión: Exponer un informe general en reuniones bimestrales con el staff médico.",
+            "Participar en la Mesa de Gestión: Reunirse semanalmente con el referente médico para revisar funcionamiento, resolver desvíos, consensuar decisiones y planificar mejoras.",
+            "Supervisar manejo de caja y facturación: Establecer puntos de control para garantizar la seguridad y corrección en la gestión de fondos.",
+            "Gestionar retroalimentación del paciente: Implementar y supervisar encuestas (digitales o físicas) para registrar comentarios, quejas o sugerencias.",
+            "Coordinar evaluaciones de desempeño: Realizar evaluaciones semestrales del personal administrativo.",
+            "Organizar capacitaciones internas: Planificar formación en herramientas informáticas, comunicación efectiva, trato al paciente y control de caja."
+        ];
+
+        // Cargar tareas al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskList = document.getElementById('taskList');
+            
+            // Cargar tareas desde localStorage o datos iniciales
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || initialTasks;
+            
+            // Renderizar tareas
+            renderTasks(tasks);
+            
+            // Manejar eventos
+            setupEventListeners();
+        });
+        
+        function renderTasks(tasks) {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const [title, description] = task.split(': ');
+                
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task-item';
+                taskItem.dataset.index = index;
+                
+                taskItem.innerHTML = `
+                    <div class="task-content">
+                        <strong>${title}</strong>: ${description}
+                    </div>
+                    <div class="task-actions">
+                        <button class="edit-btn">Editar</button>
+                        <button class="save-btn" style="display:none">Guardar</button>
+                        <button class="delete-btn">Eliminar</button>
+                    </div>
+                    <textarea class="edit-textarea" style="display:none">${task}</textarea>
+                `;
+                
+                taskList.appendChild(taskItem);
+            });
+            
+            // Guardar en localStorage
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+        
+        function setupEventListeners() {
+            // Mostrar formulario para nueva tarea
+            document.getElementById('addTaskBtn').addEventListener('click', function() {
+                document.getElementById('newTaskForm').style.display = 'block';
+                this.style.display = 'none';
+            });
+            
+            // Cancelar nueva tarea
+            document.getElementById('cancelAddBtn').addEventListener('click', function() {
+                document.getElementById('newTaskForm').style.display = 'none';
+                document.getElementById('addTaskBtn').style.display = 'block';
+                document.getElementById('newTaskTitle').value = '';
+                document.getElementById('newTaskDescription').value = '';
+            });
+            
+            // Confirmar nueva tarea
+            document.getElementById('confirmAddBtn').addEventListener('click', function() {
+                const title = document.getElementById('newTaskTitle').value.trim();
+                const description = document.getElementById('newTaskDescription').value.trim();
+                
+                if (title && description) {
+                    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                    tasks.push(`${title}: ${description}`);
+                    renderTasks(tasks);
+                    
+                    // Reset form
+                    document.getElementById('newTaskTitle').value = '';
+                    document.getElementById('newTaskDescription').value = '';
+                    document.getElementById('newTaskForm').style.display = 'none';
+                    document.getElementById('addTaskBtn').style.display = 'block';
+                } else {
+                    alert('Por favor complete ambos campos');
+                }
+            });
+            
+            // Delegación de eventos para los botones de editar/guardar/eliminar
+            document.getElementById('taskList').addEventListener('click', function(e) {
+                const taskItem = e.target.closest('.task-item');
+                if (!taskItem) return;
+                
+                const index = taskItem.dataset.index;
+                const tasks = JSON.parse(localStorage.getItem('tasks'));
+                
+                // Editar tarea
+                if (e.target.classList.contains('edit-btn')) {
+                    const contentDiv = taskItem.querySelector('.task-content');
+                    const textarea = taskItem.querySelector('.edit-textarea');
+                    const editBtn = taskItem.querySelector('.edit-btn');
+                    const saveBtn = taskItem.querySelector('.save-btn');
+                    
+                    contentDiv.style.display = 'none';
+                    textarea.style.display = 'block';
+                    editBtn.style.display = 'none';
+                    saveBtn.style.display = 'block';
+                }
+                
+                // Guardar tarea editada
+                if (e.target.classList.contains('save-btn')) {
+                    const textarea = taskItem.querySelector('.edit-textarea');
+                    const contentDiv = taskItem.querySelector('.task-content');
+                    const editBtn = taskItem.querySelector('.edit-btn');
+                    const saveBtn = taskItem.querySelector('.save-btn');
+                    
+                    tasks[index] = textarea.value.trim();
+                    
+                    // Re-renderizar solo esta tarea
+                    const [title, description] = tasks[index].split(': ');
+                    contentDiv.innerHTML = `<strong>${title}</strong>: ${description}`;
+                    
+                    contentDiv.style.display = 'block';
+                    textarea.style.display = 'none';
+                    editBtn.style.display = 'block';
+                    saveBtn.style.display = 'none';
+                    
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                }
+                
+                // Eliminar tarea
+                if (e.target.classList.contains('delete-btn')) {
+                    if (confirm('¿Está seguro que desea eliminar esta tarea?')) {
+                        tasks.splice(index, 1);
+                        renderTasks(tasks);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
